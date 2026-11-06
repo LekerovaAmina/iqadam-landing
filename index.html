@@ -1109,7 +1109,7 @@ for (let i = -9; i <= 9; i++) for (let j = -16; j <= 5; j++) {
   cells.push({ x, z, h });
 }
 const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-const blockMat = new THREE.MeshLambertMaterial({});
+const blockMat = new THREE.MeshStandardMaterial({ roughness:0.62, metalness:0.62, envMapIntensity:0.8 });
 const city = new THREE.InstancedMesh(boxGeo, blockMat, cells.length);
 city.castShadow = city.receiveShadow = true;
 const m4 = new THREE.Matrix4();
@@ -1172,12 +1172,7 @@ const titaniumMat = metal({ color:0x8f8d89, roughness:.5 });
 const glassBlack = new THREE.MeshStandardMaterial({ color:0x050507, roughness:.34, metalness:.1, envMapIntensity:.35 });
 const ledMat = new THREE.MeshBasicMaterial({ toneMapped:false });
 const ledMat2 = new THREE.MeshBasicMaterial({ toneMapped:false });
-{
-  const c = document.createElement('canvas'); c.width = c.height = 256;
-  const g = c.getContext('2d'); g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 700; i++) { const v = 205 + Math.random() * 50 | 0; g.fillStyle = `rgba(${v},${v},${v},.5)`; g.fillRect(Math.random() * 256, Math.random() * 256, 30 + Math.random() * 120, 1); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; blockMat.map = t; blockMat.needsUpdate = true;
-}
+blockMat.roughnessMap = brushed; blockMat.needsUpdate = true;
 const objects = {};
 const SCALE = 1.55;
 const shadowAll = o => o.traverse(m => { if (m.isMesh && !m.isInstancedMesh && m.geometry.type !== 'ShapeGeometry') m.castShadow = true; });
@@ -1315,9 +1310,9 @@ function applyTheme(){
   [accentMat, mintMat, logoMat].forEach(m => { m.metalness = dark ? .25 : .92; m.roughnessMap = (dark || m === logoMat) ? null : brushed; m.needsUpdate = true; });
   if (dark) { accentMat.color.set(0xf4f7fc); logoMat.color.set(0xf4f7fc); mintMat.color.set(0xd5dfee); }
   ledMat.color.set(css('--mint')); ledMat2.color.set(css('--accent-2'));
-  hemi.color.set(dark ? 0x7fa3e0 : 0xffffff); hemi.groundColor.set(dark ? 0x3a5a90 : 0xa9c0e0);
-  hemi.intensity = dark ? 2.4 : 1.5;
-  sunL.intensity = dark ? 2.4 : 2.0;
+  hemi.color.set(dark ? 0x7fa3e0 : 0xffffff); hemi.groundColor.set(dark ? 0x061225 : 0xa9c0e0);
+  hemi.intensity = dark ? 0.35 : 0.55;
+  sunL.intensity = dark ? 1.0 : 2.0;
   sunL.color.set(dark ? 0xc4d6f2 : 0xffffff);
   scene.environmentIntensity = dark ? 0.55 : 0.8;
   renderer.toneMappingExposure = dark ? 1.15 : 1.1;
