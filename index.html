@@ -799,7 +799,7 @@ header.scrolled .nav{backdrop-filter:none;background:color-mix(in srgb,var(--sur
             </div>
           </div>
           <div class="field"><label for="f-msg">Сообщение</label><textarea id="f-msg" name="message" placeholder="Кратко опишите задачу, сроки и что уже есть"></textarea></div>
-          <label class="consent" id="consentWrap"><input type="checkbox" name="consent" id="f-consent"><span>Соглашаюсь на обработку персональных данных согласно <a href="16-privacy.html" target="_blank">политике конфиденциальности</a></span></label>
+          <label class="consent" id="consentWrap"><input type="checkbox" name="consent" id="f-consent"><span>Соглашаюсь на обработку персональных данных согласно <a href="privacy.html" target="_blank">политике конфиденциальности</a></span></label>
           <div class="submit-row">
             <small>Поля со <span style="color:var(--accent)">*</span> обязательны</small>
             <button class="btn primary" type="submit" id="submitBtn">Отправить заявку <span class="arr">→</span></button>
@@ -825,7 +825,7 @@ header.scrolled .nav{backdrop-filter:none;background:color-mix(in srgb,var(--sur
       <div><h4>Контакты</h4><ul><li><a href="tel:+77018842560">+7 (701) 884-2560</a></li><li><a href="mailto:info@iqadam.kz">info@iqadam.kz</a></li><li>Астана, Казахстан</li></ul></div>
       <div><h4>Реквизиты</h4><ul><li>ТОО «IQADAM SYSTEMS»</li><li>БИН 240940030409</li><li>010000, г. Астана, р-н Нұра, ул. Күлтегін, д. 14, кв. 313</li></ul></div>
     </div>
-    <div class="copy"><span>© 2025 iQadam Systems. Все права защищены.</span><a href="16-privacy.html">Политика конфиденциальности</a></div>
+    <div class="copy"><span>© 2025 iQadam Systems. Все права защищены.</span><a href="privacy.html">Политика конфиденциальности</a></div>
   </div>
 </footer>
 
@@ -1317,7 +1317,7 @@ function applyTheme(){
   ledMat.color.set(css('--mint')); ledMat2.color.set(css('--accent-2'));
   hemi.color.set(dark ? 0x7fa3e0 : 0xffffff); hemi.groundColor.set(dark ? 0x3a5a90 : 0xa9c0e0);
   hemi.intensity = dark ? 2.4 : 1.5;
-  sunL.intensity = dark ? 1.0 : 2.0;
+  sunL.intensity = dark ? 2.4 : 2.0;
   sunL.color.set(dark ? 0xc4d6f2 : 0xffffff);
   scene.environmentIntensity = dark ? 0.55 : 0.8;
   renderer.toneMappingExposure = dark ? 1.15 : 1.1;
