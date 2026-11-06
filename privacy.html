@@ -141,7 +141,7 @@ footer{padding:0 0 32px}
   const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   try { const s = localStorage.getItem('iq3d-theme'); if (s) root.dataset.theme = s; } catch(e){}
   document.getElementById('theme').onclick = () => { root.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('iq3d-theme', root.dataset.theme); } catch(e){} };
-  let lang = 'ru'; try { lang = localStorage.getItem('iq-lang') || 'ru'; } catch(e){}
+  let lang = 'kk'; try { lang = localStorage.getItem('iq-lang') || 'kk'; } catch(e){}
   const N = { en:['The privacy policy is available in Russian.', 'Back to home'], kk:['Құпиялылық саясаты орыс тілінде қолжетімді.', 'Басты бетке'] }[lang];
   if (N) { const e = document.getElementById('langNote'); e.textContent = N[0]; e.hidden = false; document.getElementById('back').textContent = N[1]; }
 })();
