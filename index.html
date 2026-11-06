@@ -573,6 +573,19 @@ footer{padding:40px 0 32px}
 .apply-info>.glow{position:absolute;z-index:0;animation:aiglow 9s ease-in-out infinite}
 @keyframes aiglow{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-50px) scale(1.25)}}
 @media (prefers-reduced-motion:reduce){.pt-grid::before,.pt-grid::after,.apply-info>.glow{animation:none}.pt-grid::after{display:none}}
+
+/* ===== performance ===== */
+/* blur over a moving WebGL canvas is redrawn every frame */
+header.scrolled .nav{backdrop-filter:none;background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.hs{backdrop-filter:none!important;background:color-mix(in srgb,var(--surface) 95%,transparent)}
+/* blocks off screen do not animate */
+.anim-off,.anim-off *,.anim-off::before,.anim-off::after,.anim-off *::before,.anim-off *::after{animation-play-state:paused!important}
+.iso .pk,.iso .pk.m{filter:none}
+.pt-grid{container-type:inline-size}
+.pt-grid::before{animation:none}
+.pt-grid::after{will-change:transform;animation:ptdot2 5.5s ease-in-out infinite}
+@keyframes ptdot2{0%,100%{transform:translateX(0)}50%{transform:translateX(calc(84cqw - 12px))}}
+.apply-info>.glow{will-change:transform}
 </style>
 <script type="importmap">
 { "imports": {
@@ -786,7 +799,7 @@ footer{padding:40px 0 32px}
             </div>
           </div>
           <div class="field"><label for="f-msg">Сообщение</label><textarea id="f-msg" name="message" placeholder="Кратко опишите задачу, сроки и что уже есть"></textarea></div>
-          <label class="consent" id="consentWrap"><input type="checkbox" name="consent" id="f-consent"><span>Соглашаюсь на обработку персональных данных согласно <a href="privacy.html" target="_blank">политике конфиденциальности</a></span></label>
+          <label class="consent" id="consentWrap"><input type="checkbox" name="consent" id="f-consent"><span>Соглашаюсь на обработку персональных данных согласно <a href="16-privacy.html" target="_blank">политике конфиденциальности</a></span></label>
           <div class="submit-row">
             <small>Поля со <span style="color:var(--accent)">*</span> обязательны</small>
             <button class="btn primary" type="submit" id="submitBtn">Отправить заявку <span class="arr">→</span></button>
@@ -812,7 +825,7 @@ footer{padding:40px 0 32px}
       <div><h4>Контакты</h4><ul><li><a href="tel:+77018842560">+7 (701) 884-2560</a></li><li><a href="mailto:info@iqadam.kz">info@iqadam.kz</a></li><li>Астана, Казахстан</li></ul></div>
       <div><h4>Реквизиты</h4><ul><li>ТОО «IQADAM SYSTEMS»</li><li>БИН 240940030409</li><li>010000, г. Астана, р-н Нұра, ул. Күлтегін, д. 14, кв. 313</li></ul></div>
     </div>
-    <div class="copy"><span>© 2025 iQadam Systems. Все права защищены.</span><a href="privacy.html">Политика конфиденциальности</a></div>
+    <div class="copy"><span>© 2025 iQadam Systems. Все права защищены.</span><a href="16-privacy.html">Политика конфиденциальности</a></div>
   </div>
 </footer>
 
@@ -1042,14 +1055,16 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobile = () => innerWidth < 760;
 
 let renderer;
-try { renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' }); }
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias:devicePixelRatio < 1.5, powerPreference:'default' }); }
 catch (e) { sticky.classList.add('no-gl'); throw e; }
-renderer.setPixelRatio(Math.min(devicePixelRatio, mobile() ? 1.5 : 2));
+let pixelRatio = Math.min(devicePixelRatio, mobile() ? 1.25 : 1.5);
+renderer.setPixelRatio(pixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;   // redrawn a few times a second, see the loop
 
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -1063,7 +1078,7 @@ scene.add(hemi);
 const sunL = new THREE.DirectionalLight(0xffffff, 2.2);
 sunL.position.set(-14, 26, 12);
 sunL.castShadow = true;
-sunL.shadow.mapSize.set(2048, 2048);
+sunL.shadow.mapSize.set(1024, 1024);
 Object.assign(sunL.shadow.camera, { left:-30, right:30, top:30, bottom:-30, near:1, far:90 });
 sunL.shadow.bias = -0.0005; sunL.shadow.normalBias = 0.03;
 scene.add(sunL);
@@ -1094,7 +1109,7 @@ for (let i = -9; i <= 9; i++) for (let j = -16; j <= 5; j++) {
   cells.push({ x, z, h });
 }
 const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-const blockMat = new THREE.MeshStandardMaterial({ roughness:0.62, metalness:0.62, envMapIntensity:0.8 });
+const blockMat = new THREE.MeshLambertMaterial({});
 const city = new THREE.InstancedMesh(boxGeo, blockMat, cells.length);
 city.castShadow = city.receiveShadow = true;
 const m4 = new THREE.Matrix4();
@@ -1123,15 +1138,16 @@ const cover = (g, img, w, h) => {
   g.drawImage(img, 0, 0, img.naturalWidth * s, img.naturalHeight * s);
 };
 const PHONE = ['p-1', 'p-2', 'p-3'], LAPTOP = ['q-can', 'q-home', 'q-pass'];
-let phoneI = 0, laptopI = 0;
-const phoneTex = screenTex(644, 1400, (g, w, h) => cover(g, SHOT(PHONE[phoneI]), w, h));
-const dashTex = screenTex(1500, 844, (g, w, h) => cover(g, SHOT(LAPTOP[laptopI]), w, h));
-phoneTex.anisotropy = dashTex.anisotropy = 8;
-Promise.all([...PHONE, ...LAPTOP].map(n => SHOT(n).decode().catch(() => {}))).then(() => { phoneTex.redraw(); dashTex.redraw(); });
+const phoneTexs = PHONE.map(n => screenTex(540, 1174, (g, w, h) => cover(g, SHOT(n), w, h)));
+const dashTexs = LAPTOP.map(n => screenTex(1280, 720, (g, w, h) => cover(g, SHOT(n), w, h)));
+const phoneTex = phoneTexs[0], dashTex = dashTexs[0];
+let phoneScr, dashScr, phoneI = 0, laptopI = 0;
+[...phoneTexs, ...dashTexs].forEach(t => t.anisotropy = 4);
+Promise.all([...PHONE, ...LAPTOP].map(n => { const i = SHOT(n); return i.complete && i.naturalWidth ? 0 : new Promise(r => i.addEventListener('load', r, { once:true })); })).then(() => [...phoneTexs, ...dashTexs].forEach(t => { t.redraw(); renderer.initTexture(t); }));
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => {
   if (document.hidden || scrollY > heroEl.offsetHeight) return;
-  phoneI = (phoneI + 1) % PHONE.length; laptopI = (laptopI + 1) % LAPTOP.length;
-  phoneTex.redraw(); dashTex.redraw();
+  phoneI = (phoneI + 1) % 3; laptopI = (laptopI + 1) % 3;
+  phoneScr.material.map = phoneTexs[phoneI]; dashScr.material.map = dashTexs[laptopI];
 }, 3800);
 
 /* ---------- metal materials: brushed, soft highlights, no gloss ---------- */
@@ -1156,10 +1172,15 @@ const titaniumMat = metal({ color:0x8f8d89, roughness:.5 });
 const glassBlack = new THREE.MeshStandardMaterial({ color:0x050507, roughness:.34, metalness:.1, envMapIntensity:.35 });
 const ledMat = new THREE.MeshBasicMaterial({ toneMapped:false });
 const ledMat2 = new THREE.MeshBasicMaterial({ toneMapped:false });
-blockMat.roughnessMap = brushed; blockMat.needsUpdate = true;
+{
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 700; i++) { const v = 205 + Math.random() * 50 | 0; g.fillStyle = `rgba(${v},${v},${v},.5)`; g.fillRect(Math.random() * 256, Math.random() * 256, 30 + Math.random() * 120, 1); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; blockMat.map = t; blockMat.needsUpdate = true;
+}
 const objects = {};
 const SCALE = 1.55;
-const shadowAll = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+const shadowAll = o => o.traverse(m => { if (m.isMesh && !m.isInstancedMesh && m.geometry.type !== 'ShapeGeometry') m.castShadow = true; });
 
 const rrShape = (w, h, r) => {
   const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
@@ -1185,7 +1206,7 @@ const screenPlate = (w, h, r, tex) => {
   const W = 1.22, H = 2.56, D = .08, g = new THREE.Group();
   g.add(slab(W, H, .19, D, titaniumMat, .02));
   const front = plate(W - .02, H - .02, .18, glassBlack); front.position.z = D / 2 + .021; g.add(front);
-  const scr = screenPlate(1.13, 2.456, .15, phoneTex); scr.position.z = D / 2 + .023; g.add(scr);
+  const scr = phoneScr = screenPlate(1.13, 2.456, .15, phoneTex); scr.position.z = D / 2 + .023; g.add(scr);
   const island = plate(.3, .088, .044, new THREE.MeshBasicMaterial({ color:0x000000 })); island.position.set(0, 2.456 / 2 - .085, D / 2 + .025); g.add(island);
   [[-1, .72, .1], [-1, .48, .2], [-1, .22, .2], [1, .4, .32]].forEach(([s, y, h]) => {
     const b = new THREE.Mesh(new RoundedBoxGeometry(.02, h, .04, 2, .008), titaniumMat); b.position.set(s * (W / 2 + .004), y, 0); g.add(b);
@@ -1216,7 +1237,7 @@ const screenPlate = (w, h, r, tex) => {
   const back = slab(W, LH, .1, .03, graphiteMat, .012); back.position.y = LH / 2; lid.add(back);
   const bezel = plate(W - .03, LH - .03, .09, glassBlack); bezel.position.set(0, LH / 2, .03); lid.add(bezel);
   const SW = 2.88, SH = 1.62;
-  const scr = screenPlate(SW, SH, .03, dashTex); scr.position.set(0, LH / 2 + .03, .032); lid.add(scr);
+  const scr = dashScr = screenPlate(SW, SH, .03, dashTex); scr.position.set(0, LH / 2 + .03, .032); lid.add(scr);
   const notch = plate(.34, .07, .02, new THREE.MeshBasicMaterial({ color:0x000000 })); notch.position.set(0, LH / 2 + .03 + SH / 2 - .02, .034); lid.add(notch);
   g.add(lid);
   g.rotation.y = -.5;
@@ -1269,7 +1290,7 @@ const screenPlate = (w, h, r, tex) => {
   left.lineTo(...pts([235.867, 73])); left.lineTo(...pts([214.701, 115.912])); left.lineTo(...pts([154.465, 115.912]));
   left.bezierCurveTo(...pts([122.525, 115.895, 96.8585, 141.589, 96.8585, 173.554]));
   // the bevel stays inside the outline, so the silhouette matches the SVG exactly
-  const geo = new THREE.ExtrudeGeometry([left, right], { depth:0.5, bevelEnabled:true, bevelThickness:0.035, bevelSize:0.03, bevelOffset:-0.03, bevelSegments:6, curveSegments:96 });
+  const geo = new THREE.ExtrudeGeometry([left, right], { depth:0.5, bevelEnabled:true, bevelThickness:0.035, bevelSize:0.03, bevelOffset:-0.03, bevelSegments:6, curveSegments:48 });
   geo.center();
   const g = new THREE.Group(); g.add(new THREE.Mesh(geo, logoMat));
   objects.logo = { g, lift:2.9, bob:0.14, spin:0.3 };
@@ -1294,8 +1315,8 @@ function applyTheme(){
   [accentMat, mintMat, logoMat].forEach(m => { m.metalness = dark ? .25 : .92; m.roughnessMap = (dark || m === logoMat) ? null : brushed; m.needsUpdate = true; });
   if (dark) { accentMat.color.set(0xf4f7fc); logoMat.color.set(0xf4f7fc); mintMat.color.set(0xd5dfee); }
   ledMat.color.set(css('--mint')); ledMat2.color.set(css('--accent-2'));
-  hemi.color.set(dark ? 0x7fa3e0 : 0xffffff); hemi.groundColor.set(dark ? 0x061225 : 0xa9c0e0);
-  hemi.intensity = dark ? 0.35 : 0.55;
+  hemi.color.set(dark ? 0x7fa3e0 : 0xffffff); hemi.groundColor.set(dark ? 0x3a5a90 : 0xa9c0e0);
+  hemi.intensity = dark ? 2.4 : 1.5;
   sunL.intensity = dark ? 1.0 : 2.0;
   sunL.color.set(dark ? 0xc4d6f2 : 0xffffff);
   scene.environmentIntensity = dark ? 0.55 : 0.8;
@@ -1354,6 +1375,7 @@ function updateHotspots(){
 
 /* ---------- loop ---------- */
 let running = false;
+let lastS = -1, lastStep = -1;
 function render(t){
   smooth += (progress - smooth) * (reduced ? 1 : 0.075);
   mouseS.lerp(mouse, 0.05);
@@ -1368,15 +1390,18 @@ function render(t){
   });
   objects.rack.g.userData.leds.forEach(({ led, phase }) => { led.visible = Math.sin(t * 3 + phase) > -0.4; });
 
-  // headline drifts up & fades as we fly in
-  heroCopy.style.opacity = Math.max(0, 1 - smooth * 3.2);
-  heroCopy.style.transform = `translateY(${-smooth * 220}px)`;
-  hint.style.opacity = smooth > 0.03 ? 0 : 1;
-  const step = Math.min(railDots.length - 1, Math.floor(smooth * railDots.length));
-  railDots.forEach((d, k) => d.classList.toggle('on', k === step));
+  // headline drifts up & fades as we fly in (DOM is touched only when the value changes)
+  if (Math.abs(smooth - lastS) > 2e-4) {
+    lastS = smooth;
+    heroCopy.style.opacity = Math.max(0, 1 - smooth * 3.2);
+    heroCopy.style.transform = `translateY(${-smooth * 220}px)`;
+    hint.style.opacity = smooth > 0.03 ? 0 : 1;
+    const step = Math.min(railDots.length - 1, Math.floor(smooth * railDots.length));
+    if (step !== lastStep) { lastStep = step; railDots.forEach((d, k) => d.classList.toggle('on', k === step)); }
+  }
 
   renderer.render(scene, camera);
-  updateHotspots();
+  if (smooth > 0.1) updateHotspots();
 }
 applyTheme();
 if (reduced) {
@@ -1386,7 +1411,23 @@ if (reduced) {
   let visible = true;
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(sticky);
   running = true;
-  renderer.setAnimationLoop(t => { if (visible) render(t / 1000); });
+  // full rate while something moves, 30 fps at rest; quality drops once on a slow machine
+  let lastDraw = 0, lastInput = 0, frames = 0, spent = 0, tick = 0;
+  addEventListener('pointermove', () => lastInput = performance.now(), { passive:true });
+  addEventListener('scroll', () => lastInput = performance.now(), { passive:true });
+  renderer.setAnimationLoop(t => {
+    if (!visible || document.hidden) return;
+    const busy = t - lastInput < 700 || Math.abs(progress - smooth) > 1e-3;
+    if (!busy && t - lastDraw < 31) return;
+    if (lastDraw) { spent += t - lastDraw; frames++; }
+    lastDraw = t;
+    if (++tick % 6 === 1) renderer.shadowMap.needsUpdate = true;
+    render(t / 1000);
+    if (frames === 90) {
+      if (busy && spent / frames > 30 && pixelRatio > 1) { pixelRatio = 1; renderer.setPixelRatio(1); resize(); }
+      frames = spent = 0;
+    }
+  });
 }
 </script>
 <script>
@@ -1403,7 +1444,7 @@ if (reduced) {
   const size = () => {
     const r = box.getBoundingClientRect(); dpr = Math.min(devicePixelRatio || 1, 2); W = r.width; H = r.height;
     cv.width = W * dpr; cv.height = H * dpr;
-    const n = Math.round(Math.min(90, W * H / 8500));
+    const n = Math.round(Math.min(56, W * H / 12000));
     P = Array.from({ length:n }, () => ({ x:Math.random() * W, y:Math.random() * H, vx:(Math.random() - .5) * .28, vy:(Math.random() - .5) * .28, r:1 + Math.random() * 1.5 }));
   };
   const LINK = 112, REACH = 170;
@@ -1437,7 +1478,8 @@ if (reduced) {
       g.beginPath(); g.arc(p.x, p.y, p.r + near * 1.8, 0, 6.29); g.fill();
     }
   }
-  const loop = () => { if (seen && !document.hidden) frame(); requestAnimationFrame(loop); };
+  let odd = false;
+  const loop = () => { odd = !odd; if (seen && !document.hidden && odd) frame(); requestAnimationFrame(loop); };
   box.addEventListener('pointermove', e => {
     const r = box.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; mouse.on = true;
     box.style.setProperty('--mx', mouse.x + 'px'); box.style.setProperty('--my', mouse.y + 'px');
@@ -1457,6 +1499,18 @@ if (reduced) {
       const r = c.getBoundingClientRect(); c.style.setProperty('--mx', e.clientX - r.left + 'px'); c.style.setProperty('--my', e.clientY - r.top + 'px');
     });
   });
+})();
+</script>
+<script>
+/* pause CSS and SVG animations of everything that is off screen */
+(() => {
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    const off = !e.isIntersecting;
+    e.target.classList.toggle('anim-off', off);
+    const svg = e.target.querySelector('svg.iso');
+    if (svg) off ? svg.pauseAnimations() : svg.unpauseAnimations();
+  }), { rootMargin:'120px 0px' });
+  document.querySelectorAll('.key, .ist-scene, .rk-left, #partners, .apply-info').forEach(el => io.observe(el));
 })();
 </script>
 </body>
