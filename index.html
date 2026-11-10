@@ -595,6 +595,13 @@ header.scrolled .nav{backdrop-filter:none;background:color-mix(in srgb,var(--sur
 .store{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:500;transition:background .2s,color .2s}
 .store:hover{background:var(--accent);color:var(--accent-ink)}
 .store svg{width:18px;height:18px;fill:currentColor}
+
+/* phones: the buttons sit at the bottom of the first screen, below the 3D objects */
+@media (max-width:560px){
+  .hero-sub .ctas{position:absolute;left:16px;right:16px;bottom:calc(26px + env(safe-area-inset-bottom));flex-wrap:nowrap}
+  .hero-sub .ctas .btn{flex:1;justify-content:center;white-space:nowrap;padding:0 14px;font-size:14px;gap:8px}
+  .scroll-hint{display:none}
+}
 </style>
 <script type="importmap">
 { "imports": {
